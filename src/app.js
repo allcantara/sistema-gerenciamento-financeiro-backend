@@ -6,6 +6,7 @@ const routes = require("./routes");
 
 const app = express();
 
+require("dotenv").config();
 require("./database/database");
 // require("./database/database_test"); // Database para realizar os testes
 
