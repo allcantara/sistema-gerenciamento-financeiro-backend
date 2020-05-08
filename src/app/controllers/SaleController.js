@@ -37,22 +37,23 @@ module.exports = {
       };
 
       const sale = await Sale.create(data);
-      const dataTax = {
-        total: sale.total - sale.total * sale.taxeSale,
-        date,
-        isTaxes: sale.isTaxes,
-        sale_id: sale._id,
-      };
-      const taxe = await storeTaxe(dataTax);
 
       const percent = sale.taxeSale / 100;
-
       const totalDesProduct = totalProfit - totalProfit * percent;
       const totalTaxesValue = totalProfit - totalDesProduct * 0.06;
       const totalProfitFinal =
         totalProfit -
         (totalProfit - totalDesProduct) -
         (totalProfit - totalTaxesValue);
+
+      const dataTax = {
+        total: totalDesProduct,
+        date,
+        isTaxes: sale.isTaxes,
+        sale_id: sale._id,
+        user_id: user._id,
+      };
+      await storeTaxe(dataTax);
 
       const dataReport = {
         user_id: sale.user_id,
@@ -67,8 +68,8 @@ module.exports = {
 
       user.totalProfit += report.totalProfit;
       user.totalSale += report.totalSales;
-      user.totalProduct += report.totalProducts;
-      user.totalTaxes += report.totalTaxes;
+      // user.totalProduct += report.totalProducts;
+      // user.totalTaxes += report.totalTaxes;
       await user.save();
 
       return res.json({ ...sale });
@@ -81,7 +82,6 @@ module.exports = {
   async update(req, res) {
     try {
       const { id } = req.params;
-
       if (!(await Sale.findById(id)))
         return res.status(400).json({ message: "Venda não encontrada!" });
 
@@ -108,11 +108,12 @@ module.exports = {
         distributor,
         valueUnitary: unitary,
         amount,
-        taxeSale: Number(taxeSale.replace(",", ".")) / 100,
+        taxeSale: Number(taxeSale.replace(",", ".")),
         date,
         valueLote,
         total: totalProfit,
         isTaxes,
+        user_id,
       };
 
       const sale = await Sale.findByIdAndUpdate(
@@ -120,6 +121,11 @@ module.exports = {
         { ...data, updatedAt: Date.now() },
         { new: true }
       );
+
+      const report = await Report.findOne({ sale_id: sale._id });
+      user.totalProduct += report.totalProducts;
+
+      await user.save();
 
       return res.json(sale);
     } catch (error) {
@@ -138,6 +144,17 @@ module.exports = {
       const user = await User.findOne({ _id: sale.user_id });
       const report = await Report.findOne({ sale_id: sale._id });
       const taxe = await Taxe.findOne({ sale_id: sale._id });
+
+      if (!taxe.isTaxes)
+        return res.status(202).json({
+          message: "Não é possível excluir: O imposto não está pago...",
+        });
+
+      if (!sale.isTaxes)
+        return res.status(202).json({
+          message:
+            "Não é possível excluir: A taxa do distribuidor não está paga...",
+        });
 
       user.totalProduct -= report.totalProducts;
       user.totalProfit -= report.totalProfit;

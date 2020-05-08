@@ -1,23 +1,26 @@
-const Sale = require("../models/Sale");
+const User = require("../models/User");
+const Report = require("../models/Report");
 const Taxe = require("../models/Taxe");
 
 module.exports = {
   async store(body) {
     try {
-      const { total, date, isTaxes, sale_id } = body;
+      const { total, date, isTaxes, sale_id, user_id } = body;
 
-      const tax = 0.06;
+      const tax = 6;
+      const percent = tax / 100;
       const data = {
         total,
         date,
         tax,
-        taxeSale: total * tax,
+        taxeSale: total - (total - total * percent),
         isTaxes,
         sale_id,
+        user_id,
       };
 
-      const taxe = await Taxe.create(data);
-      return taxe;
+      await Taxe.create(data);
+      return;
     } catch (error) {
       console.log(error);
       return { message: "Falha ao cadastrar imposto!", error };
@@ -27,17 +30,19 @@ module.exports = {
   async update(req, res) {
     try {
       const { id } = req.params;
-      if (!(await Taxe.findById(id)))
+      const taxe = await Taxe.findById(id);
+      if (!taxe)
         return res.status(400).json({ message: "Imposto não encontrado!" });
 
-      const { isTaxes } = req.body;
-      const data = { isTaxes };
+      const { isTaxes, sale_id, user_id } = req.body;
 
-      const taxe = await Taxe.findByIdAndUpdate(
-        id,
-        { ...data, updatedAt: Date.now() },
-        { new: true }
-      );
+      const report = await Report.findOne({ sale_id });
+      const user = await User.findById(user_id);
+      user.totalTaxes += report.totalTaxes;
+      await user.save();
+
+      taxe.isTaxes = isTaxes;
+      await taxe.save();
 
       return res.json(taxe);
     } catch (error) {

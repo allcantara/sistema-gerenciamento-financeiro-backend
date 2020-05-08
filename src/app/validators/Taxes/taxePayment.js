@@ -9,5 +9,7 @@ module.exports = celebrate({
   }),
   [Segments.BODY]: Joi.object().keys({
     isTaxes: Joi.boolean().required(),
+    user_id: Joi.string().required(),
+    sale_id: Joi.string().required(),
   }),
 });

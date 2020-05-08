@@ -7,6 +7,11 @@ const TaxeSchema = new Schema({
     ref: "Sale",
     required: true,
   },
+  user_id: {
+    type: Types.ObjectId,
+    ref: "User",
+    required: true,
+  },
   tax: {
     type: Number,
     default: 0.06,
