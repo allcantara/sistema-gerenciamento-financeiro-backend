@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-mongoose.connect("mongodb://localhost:27017/sigef", {
+mongoose.connect("mongodb://localhost:27017/sigef_test", {
   useNewUrlParser: true,
   useUnifiedTopology: true,
   useFindAndModify: false,

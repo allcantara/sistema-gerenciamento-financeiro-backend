@@ -20,7 +20,6 @@ module.exports = {
       if (!user)
         return res.status(400).send({ message: "Usuário não encontrado!" });
 
-      console.log(user);
       const data = {
         totalProfit: user.totalProfit,
         totalProducts: user.totalProduct,

@@ -1,6 +1,6 @@
 // @ts-nocheck
 const { Schema, Types, model } = require("mongoose");
-const { hash: _hash } = require("bcryptjs");
+const { hash: _hash, compare } = require("bcryptjs");
 
 const UserSchema = new Schema({
   name: {
@@ -30,6 +30,7 @@ const UserSchema = new Schema({
   email: {
     type: String,
     required: true,
+    unique: true,
   },
   password: {
     type: String,
@@ -45,11 +46,23 @@ const UserSchema = new Schema({
   },
 });
 
-UserSchema.pre("save", async function (next) {
-  const hash = await _hash(String(this.password), 10);
-  this.password = hash;
-  next();
+// UserSchema.pre("save", async function (next) {
+//   const hash = await _hash(String(this.password), 10);
+//   this.password = hash;
+//   next();
+// });
+
+UserSchema.pre("save", async function () {
+  if (this.isModified("password")) {
+    this.password = await User.hash(this.password);
+  }
 });
+UserSchema.statics.hash = function (password) {
+  return _hash(password, 10);
+};
+UserSchema.methods.matchesPassword = function (password) {
+  return compare(password, this.password);
+};
 
 const User = model("User", UserSchema);
 

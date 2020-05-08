@@ -1,10 +1,12 @@
 const { Router } = require("express");
 const authMiddleware = require("./app/middlewares/auth");
+const { login } = require("./app/controllers/SessionController");
+
 const {
   store: storeUser,
   showReport,
 } = require("./app/controllers/UserController");
-const { login } = require("./app/controllers/SessionController");
+
 const {
   store: storeSale,
   delete: deleteSale,
@@ -18,22 +20,35 @@ const {
   index: indexTaxes,
 } = require("./app/controllers/TaxeController");
 
+const {
+  ValidationSaleCreate,
+  ValidationSaleUpdate,
+  ValidationSaleShow,
+  ValidationSaleIndex,
+  ValidationSaleDelete,
+  ValidateSession,
+  ValidateReport,
+  ValidationTaxeIndex,
+  ValidationTaxesPayment,
+  ValidateUserCreate,
+} = require("./app/validators");
+
 const routes = Router();
 
-routes.post("/users", storeUser);
-routes.post("/login", login);
+routes.post("/users", ValidateUserCreate, storeUser);
+routes.post("/login", ValidateSession, login);
 
 routes.use(authMiddleware);
 
-routes.post("/sales", storeSale);
-routes.get("/sales", indexSale);
-routes.get("/sales/:id", showSale);
-routes.delete("/sales/:id", deleteSale);
-routes.put("/sales/:id", updateSale);
+routes.post("/sales", ValidationSaleCreate, storeSale);
+routes.get("/sales", ValidationSaleIndex, indexSale);
+routes.get("/sales/:id", ValidationSaleShow, showSale);
+routes.delete("/sales/:id", ValidationSaleDelete, deleteSale);
+routes.put("/sales/:id", ValidationSaleUpdate, updateSale);
 
-routes.put("/taxes/:id", updateTaxe);
-routes.get("/taxes", indexTaxes);
+routes.put("/taxes/:id", ValidationTaxesPayment, updateTaxe);
+routes.get("/taxes", ValidationTaxeIndex, indexTaxes);
 
-routes.get("/report/:id", showReport);
+routes.get("/report/:id", ValidateReport, showReport);
 
 module.exports = routes;
